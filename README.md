@@ -1,16 +1,9 @@
-# React + Vite
+# IRC Dashboard handoff
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+The accompanying ZIP contains the last observed modified dashboard source files and untracked source files from the session. Paths are preserved so updated files can be compared with the same paths in the repository. RadioLinkPanel.jsx and the backend collector and telemetry files are included.
 
-Currently, two official plugins are available:
+The Git working-tree inventory could not be rechecked in the current session because Git returned “this operation must be run in a work tree” under the current environment. The list is based on the last successful status captured earlier in this chat. Further changes since that status may be missing. Review each file against the target branch before applying it. No commit, upload or push was performed.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+The ZIP deliberately excludes .env, credentials, virtual environments, node_modules, compiled Python caches, .git and build output. The launcher and camera scripts depend on local paths and existing dependencies. The launcher also refers to work/phone-dashboard.py and a local built dashboard. They are included as bench setup files, and require adaptation for another computer.
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+The base commit last observed is 8b3f02f, on branch feature/mikrotik-https-integration. The GitHub remote configured locally is https://github.com/Rutss123/IRC_DASHBOARD.git. Remote branch contents have not been verified.

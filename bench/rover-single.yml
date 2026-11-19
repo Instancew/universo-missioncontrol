@@ -1,0 +1,31 @@
+# Bench profile for MediaMTX 1.21.4. Loopback publisher and one authorized phone.
+rtsp: false
+rtmp: false
+hls: false
+srt: false
+moq: false
+webrtcAddress: 0.0.0.0:8889
+webrtcLocalUDPAddress: 0.0.0.0:8189
+webrtcLocalTCPAddress: 0.0.0.0:8189
+webrtcIPsFromInterfaces: false
+webrtcAdditionalHosts: [127.0.0.1, 192.168.88.254]
+api: true
+apiAddress: 127.0.0.1:9997
+authInternalUsers:
+  - user: any
+    ips: [127.0.0.1, "::1"]
+    permissions:
+      - action: publish
+        path: rovercam
+      - action: read
+        path: rovercam
+      - action: api
+  - user: any
+    ips: [192.168.88.252]
+    permissions:
+      - action: read
+        path: rovercam
+paths:
+  rovercam:
+    source: publisher
+    overridePublisher: false

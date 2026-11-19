@@ -1,0 +1,50 @@
+# Two-device test through the MikroTik radios
+
+One laptop and a phone are sufficient. The laptop hosts the USB camera publisher, MediaMTX and the dashboard. The phone opens the dashboard in its browser. The same test also works with an Ethernet-equipped computer as the receiver.
+
+## Phone setup and unplug test
+
+**Current bench addresses.** The laptop is `192.168.88.254` on Ethernet 4, the NetMetal is `192.168.88.2`, the mANTBox AP is `192.168.88.1`, and the test phone is `192.168.88.252`. With the phone on the mANTBox SSID, open the [phone dashboard](http://192.168.88.254:5174/) or the [direct phone player](http://192.168.88.254:8889/rovercam/).
+
+The current bench uses `rover-single.yml` for one MediaMTX process. Chrome publishes H.264 over local WebRTC and the phone reads it from the same process over the radio link. The server permits publishing from loopback and reading from the phone's IP. The laptop serves the compiled dashboard on port 5174. The original two-instance profile `rover-phone.yml` is retained as the prior test configuration.
+
+On 19 November the phone displayed fresh video with the single-server profile. A local reader decoded 640 × 360 at 14–15 FPS in short samples. The server sent 309 more RTP packets to the phone over one three-second sample with zero discarded frames reported for that session. The stock player took 19.5 seconds to show a fresh frame after the local test explicitly closed its reader. That experiment measures the player and transport recovery path. End-to-end latency and recovery during a physical RF obstruction are still to be measured.
+
+The phone build also polls live radio statistics. Build it with `VITE_RADIO_LINK_URL=/api/radio-link` and use `work/vite-build-radio` as the build output folder. The phone dashboard server forwards only that read request to the backend at `127.0.0.1:8000`. Keep the backend running and refresh the phone page after updating the build.
+
+Run the single MediaMTX process from the workspace root with `& (Get-Item "$env:LOCALAPPDATA\Microsoft\WinGet\Packages\bluenviron.mediamtx_*\mediamtx.exe").FullName outputs/rover-single.yml` after stopping any prior MediaMTX instance using those ports. Follow [the local camera guide](Local-camera.md) to start the dashboard and launch the publisher with `--live --low-rate --check-recovery`. The low bitrate profile requests 640 × 360, 15 FPS and 700 kbps. Chrome controls the H.264 keyframe interval. The optional recovery check closes a tagged local test reader on the server and times the first frame in its replacement session. Use the physical cable and obstruction tests for wireless recovery. If DHCP assigns a different phone address, update both the server profile and phone dashboard allowlist before testing.
+
+1. Connect the laptop's Ethernet port to the unpowered LAN/data side of the NetMetal's injector. Keep the USB webcam connected to the laptop. Confirm that the NetMetal and mANTBox are associated. Join an existing Wi-Fi access point on the mANTBox LAN from the phone. If the mANTBox itself already offers a client-accessible SSID, the phone can join it directly provided the route to the laptop crosses the NetMetal link. Another option is a compatible phone Ethernet adapter connected to the unpowered LAN side of the mANTBox injector.
+2. Record the phone's IP from its network details and the laptop's Ethernet IP. Keep the phone on this operator-side network for the whole test and exclude alternate routes. Use the receiver access settings below for the phone's address.
+3. Keep the local dashboard running. For the phone, serve the same app on the laptop's CPE-facing Ethernet address. One option is a separate Vite process in the dashboard repository: `npm.cmd run dev -- --host <laptop-Ethernet-IP> --port 5174 --strictPort`. Replace the placeholder with the numeric address. The existing Front Camera profile uses the dashboard hostname with port 8889 by default. Check that the phone can reach TCP 5174 under the existing Windows firewall policy. Obtain approval before any firewall changes.
+4. On the phone, test `http://<laptop-Ethernet-IP>:8889/rovercam/`, then open `http://<laptop-Ethernet-IP>:5174/` and watch Front Camera. On the laptop, leave the localhost publisher open and aim the webcam at a ticking clock.
+5. Unplug the **laptop's Ethernet data cable** for about 10 seconds. Keep the phone on its network and both radios powered. Local camera capture should continue. On the phone the clock should stop advancing after any buffered frames, or the player may display a reconnecting message.
+6. Reconnect that cable. Leave the dashboard open and measure the time until the phone shows the **current** clock time advancing without a refresh. Record automatic recovery as passed only if that happens. If manual refresh is needed, record restored playback and failed automatic recovery separately. Check radio association and interface byte counters using the steps below to confirm traffic used both radios.
+
+## Physical path
+
+`USB Camera → laptop Ethernet → NetMetal ax ⇄ mANTBox ax → receiver Ethernet → browser`
+
+1. Use the radios' existing paired configuration and their designated Ethernet/PoE connections. Record the laptop and receiver Ethernet addresses, subnet and routes, AP and station identities, and radio interface names. Use read-only RouterOS WiFi registration and interface statistics to confirm that the peers are associated. Obtain approval before changing any radio configuration.
+2. Verify that the route to the laptop uses the receiver's CPE-facing Ethernet interface. On Windows, use `Find-NetRoute -RemoteIPAddress <laptop-Ethernet-IP>`. Check the reverse route on the laptop. Exclude alternate paths through office Wi-Fi, VPN or another cable when interpreting results. Keep both test devices on opposite sides of the wireless hop.
+3. Record a local playback baseline on the laptop. Use the same camera, H.264 settings, target bitrate and scene movement in both trials. Write down the actual decoded resolution because WebRTC can adapt it.
+
+## Make the receiver reachable
+
+The supplied bench profile binds to loopback. Create a separate copy for the wireless run. Keep other services and publishing permissions local. Obtain approval for any necessary Windows network or firewall change.
+
+- In the copied MediaMTX profile, set `webrtcAddress: :8889` for the laptop's local publisher and remote player. Bind `webrtcLocalUDPAddress` and `webrtcLocalTCPAddress` to port 8189 on both addresses (for example `:8189`). Keep `webrtcIPsFromInterfaces: false`. Set `webrtcAdditionalHosts` to `[127.0.0.1, <laptop-Ethernet-IP>]`, replacing the placeholder with the actual address.
+- Keep the loopback user's existing permissions. Add a separate `authInternalUsers` entry with `user: any`, `ips: [<receiver-IP>]`, and only a `read` permission for `path: rovercam`. Use the address MediaMTX actually sees if the network is routed through NAT. Review the scope with the network owner if the translated address is shared.
+- Check existing firewall access from that receiver for TCP 8889 (signaling), UDP 8189 (preferred media), and TCP 8189 (fallback). Restrict any approved new access to the intended interface and receiver. The receiver only needs WebRTC. [MediaMTX connectivity reference](https://mediamtx.org/docs/features/webrtc-specific-features)
+- Run the server with the test profile during the scheduled test. On the laptop, use the localhost browser publisher with the external USB Camera, H.264 and audio set to none. Keep its tab open.
+
+## Verify the actual wireless stream
+
+1. On the receiver, open `http://<laptop-Ethernet-IP>:8889/rovercam/`. Move a hand or a changing clock in front of the USB camera. Confirm the receiver shows the new movement. A successful page load alone only verifies signaling reachability.
+2. Open the receiving browser's WebRTC diagnostics (in Chrome, open `chrome://webrtc-internals` before connecting). Record the selected ICE candidate pair, its transport and the laptop endpoint. Confirm a connected pair, inbound `video/H264`, and increasing `framesDecoded` and `bytesReceived`. Check MediaMTX's console for the matching reader. Record whether the run used UDP or TCP.
+3. Compare the radios' directional byte counters before, during and after streaming. Look for the corresponding increase on the NetMetal transmit and mANTBox receive sides. Record signal, TX/RX rate and link interruptions alongside decoded frames, packet loss, jitter and visible freezes. [MikroTik WiFi registration and monitoring](https://help.mikrotik.com/docs/spaces/ROS/pages/224559120/WiFi)
+4. For dashboard testing, run the existing dashboard on the receiver with `VITE_ROVERCAM_PLAYER_URL=http://<laptop-Ethernet-IP>:8889/rovercam/` in the Vite process environment. Restart Vite or rebuild after changing it. Alternatively use an approved dashboard host that already uses the correct player URL. An HTTPS-hosted dashboard needs an HTTPS player endpoint with a trusted certificate. Confirm Front Camera plays and still works after moving its panel.
+5. Suggested bench acceptance is five continuous minutes of changing video at the receiver, increasing decoded frames, and no unrecovered freeze. Record duration, resolution, transport and stalls. For glass-to-glass latency, put a running millisecond clock in the camera view and photograph the clock and receiver display together. Repeat and report the range.
+6. Perform the laptop-side data cable test above. End the test by closing the publisher, stopping the phone-facing Vite process if used, and restoring the local MediaMTX profile. Record any approved temporary host changes for reversal.
+
+If the player page fails, check the IP, HTTP listener, receiver read permissions and TCP 8889 first. If the page loads but frames stay at zero, check the advertised ICE address, selected transport and port 8189. If direct playback succeeds but the dashboard fails, check the iframe URL, scheme, and the Vite environment active at build or startup.
