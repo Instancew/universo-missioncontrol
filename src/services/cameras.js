@@ -6,12 +6,13 @@
 export const INITIAL_CAMERAS = [
   {
     id: "front_cam",
+    whepUrl: import.meta.env.VITE_ROVER_WHEP_URL || '',
     name: "Front Camera",
     type: "navigation",
     status: "online",
-    fps: 30,
-    latency: 24,
-    resolution: "1920x1080",
+    fps: null,
+    latency: null,
+    resolution: "Configured on Jetson",
     stream: null
   },
   {

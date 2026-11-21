@@ -1,0 +1,23 @@
+[Unit]
+Description=IRC rover USB camera H.264 publisher
+Wants=rover-mediamtx.service
+After=rover-mediamtx.service
+StartLimitIntervalSec=0
+
+[Service]
+User=rover-video
+Group=video
+SupplementaryGroups=render
+EnvironmentFile=/etc/irc-rover/rover.env
+ExecStart=/usr/bin/python3 /opt/irc-rover/deploy/jetson/publish.py
+Restart=always
+RestartSec=2
+KillSignal=SIGINT
+TimeoutStopSec=10
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

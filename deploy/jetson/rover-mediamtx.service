@@ -1,0 +1,20 @@
+[Unit]
+Description=IRC rover MediaMTX (single instance)
+Wants=network-online.target
+After=network-online.target
+StartLimitIntervalSec=0
+
+[Service]
+User=rover-video
+Group=video
+EnvironmentFile=/etc/irc-rover/rover.env
+ExecStart=/usr/local/bin/mediamtx /opt/irc-rover/deploy/jetson/mediamtx.yml
+Restart=always
+RestartSec=2
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

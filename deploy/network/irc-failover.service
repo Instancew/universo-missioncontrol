@@ -1,0 +1,21 @@
+[Unit]
+Description=IRC local-router path controller (dry-run by default)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=rover-link
+EnvironmentFile=/etc/irc-rover/controller.env
+ExecStart=/usr/bin/python3 /opt/irc-rover/deploy/network/failover.py --config /etc/irc-rover/link.json
+# Stop on route-write/readback failures for operator review; do not blindly repeat writes.
+Restart=no
+RuntimeDirectory=irc-failover
+RuntimeDirectoryMode=0755
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

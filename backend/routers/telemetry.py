@@ -25,8 +25,8 @@ Why keep receive loop alive?
   would add command handling later.
 """
 
-from __future__ import annotations
 
+from typing import Any
 import logging
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
@@ -55,7 +55,24 @@ async def get_current_telemetry() -> TelemetrySnapshot | None:
     """
     return telemetry_service.get_telemetry()
 
+@router.get("/api/radio-link")
+async def get_radio_link() -> dict[str, Any]:
+    """
+    Returns live MikroTik statistics independently
+    of rover telemetry.
+    """
 
+    custom_data = telemetry_service.get_custom_data()
+
+    radio_link = custom_data.get("radio_link")
+
+    if radio_link is None:
+        return {
+            "status": "waiting_for_first_poll",
+            "routers": {}
+        }
+
+    return radio_link
 # ---------------------------------------------------------------------------
 # WebSocket — live stream
 # ---------------------------------------------------------------------------

@@ -1,4 +1,5 @@
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
+import RoverWebRTC from './RoverWebRTC';
 import { useRover } from '../../context/RoverContext';
 import { Camera, AlertCircle, AlertTriangle } from 'lucide-react';
 
@@ -180,12 +181,12 @@ export default function CameraFrame({ camera, isMinified = false, className = ""
             {headerSelector ? headerSelector : <span>{camera.name.toUpperCase()}</span>}
           </div>
           <span className="text-[7.5px] text-slate-500 font-bold tracking-widest pl-5.5 uppercase">
-            WEBRTC DOCK // PROFILE: {camera.resolution}
+            {camera.id === 'front_cam' ? 'MediaMTX WebRTC' : `WEBRTC DOCK // PROFILE: ${camera.resolution}`}
           </span>
         </div>
 
         {/* Right badging */}
-        <div className="flex items-center bg-space-950/80 border border-space-850 px-2 py-1 rounded gap-3 text-[8.5px] text-slate-400 font-bold font-mono">
+        {camera.id !== 'front_cam' && <div className="flex items-center bg-space-950/80 border border-space-850 px-2 py-1 rounded gap-3 text-[8.5px] text-slate-400 font-bold font-mono">
           {camera.isRecording && (
             <div className="flex items-center gap-1 text-cyber-red font-black animate-pulse">
               <span className="w-1.5 h-1.5 rounded-full bg-cyber-red" />
@@ -205,7 +206,7 @@ export default function CameraFrame({ camera, isMinified = false, className = ""
             <span className="w-1.5 h-1.5 rounded-full bg-cyber-red" />
             <span>LIVE</span>
           </div>
-        </div>
+        </div>}
       </div>
 
       {/* 2. FLOATING REAL-TIME WARNING & NOTIFICATION SYSTEMS */}
@@ -237,7 +238,9 @@ export default function CameraFrame({ camera, isMinified = false, className = ""
 
       {/* RENDER VIEWPORT FRAME */}
       <div className="relative w-full h-full flex-1 flex items-center justify-center overflow-hidden">
-        {camera.status === 'online' ? (
+        {camera.status === 'online' && camera.id === 'front_cam' ? (
+          <RoverWebRTC url={camera.whepUrl} />
+        ) : camera.status === 'online' ? (
   <img    
     src={camera.stream || "http://192.168.1.5:8080/video"}
     alt={camera.name}

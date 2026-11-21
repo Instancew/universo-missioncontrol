@@ -1,0 +1,37 @@
+{
+  "router_url": "https://10.42.0.1",
+  "auto_apply": false,
+  "hardware_acceptance_passed": false,
+  "interval_seconds": 1,
+  "remote_lan": "10.43.0.0/24",
+  "status_file": "/run/irc-failover/status.json",
+  "thresholds": {
+    "max_loss": 20,
+    "max_latency_ms": 100,
+    "recover_loss": 5,
+    "recover_latency_ms": 60,
+    "outage_seconds": 2,
+    "degrade_seconds": 5,
+    "recovery_seconds": 20,
+    "backup_ready_seconds": 1,
+    "max_gap_seconds": 5
+  },
+  "bands": {
+    "5": {
+      "source": "10.44.50.2",
+      "peer": "10.44.50.1",
+      "interface": "REPLACE_WIFI_5",
+      "peer_mac": "REPLACE_PEER_MAC_5",
+      "route_comment": "irc-rover-via-5",
+      "table": "irc-probe-5"
+    },
+    "24": {
+      "source": "10.44.24.2",
+      "peer": "10.44.24.1",
+      "interface": "REPLACE_WIFI_24",
+      "peer_mac": "REPLACE_PEER_MAC_24",
+      "route_comment": "irc-rover-via-24",
+      "table": "irc-probe-24"
+    }
+  }
+}

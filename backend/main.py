@@ -59,10 +59,12 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from models.telemetry import HealthResponse
 from routers.telemetry import router as telemetry_router
+from routers.link_paths import router as link_paths_router
 
 from services.telemetry_service import telemetry_service
 from simulators.rover_simulator import is_running, run_simulator, stop_simulator
 from services.jetson_udp_listener import run_udp_listener
+from services.mikrotik_collector import run_mikrotik_collector
 from websocket.websocket_manager import connection_manager
 
 # ---------------------------------------------------------------------------
@@ -106,24 +108,53 @@ async def lifespan(app: FastAPI):
     """Start background tasks on startup; cancel them on shutdown."""
     logger.info("Starting rover backend …")
 
+
+    # Task 1: Receive rover telemetry from Jetson
     sim_task = asyncio.create_task(
-    run_udp_listener(),
-    name="jetson_udp_listener"
-)
-    broadcast_task = asyncio.create_task(_broadcast_loop(), name="ws_broadcast")
+        run_udp_listener(),
+        name="jetson_udp_listener"
+    )
+
+    # Task 2: Collect radio statistics from both MikroTik routers
+    mikrotik_task = asyncio.create_task(
+        run_mikrotik_collector(),
+        name="mikrotik_collector"
+    )
+
+    # Task 3: Broadcast telemetry to dashboard clients
+    broadcast_task = asyncio.create_task(
+        _broadcast_loop(),
+        name="ws_broadcast"
+    )
+
+    logger.info(
+        "Jetson UDP listener, MikroTik collector "
+        "and WebSocket broadcaster started."
+    )
+
 
     logger.info("Simulator and broadcast loop running.")
     yield  # ← application runs here
 
-    # Graceful shutdown
-    logger.info("Shutting down …")
+      # Graceful shutdown
+    logger.info("Shutting down ...")
+
     stop_simulator()
+
     sim_task.cancel()
+    mikrotik_task.cancel()
     broadcast_task.cancel()
+
     try:
-        await asyncio.gather(sim_task, broadcast_task, return_exceptions=True)
+        await asyncio.gather(
+            sim_task,
+            mikrotik_task,
+            broadcast_task,
+            return_exceptions=True
+        )
     except Exception:
-        pass
+        logger.exception("Error during task shutdown")
+
     logger.info("Backend shut down cleanly.")
 
 
@@ -151,7 +182,9 @@ app.add_middleware(
 # Routers
 # ---------------------------------------------------------------------------
 
+# Register telemetry REST and WebSocket routes
 app.include_router(telemetry_router)
+app.include_router(link_paths_router)
 
 
 # ---------------------------------------------------------------------------

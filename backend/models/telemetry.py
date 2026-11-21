@@ -16,7 +16,7 @@ Architecture note:
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import Any, Literal
 from pydantic import BaseModel, Field
 
 
@@ -158,7 +158,8 @@ class TelemetrySnapshot(BaseModel):
     driveMotors: list[DriveMotor]   # always 6 elements
     armMotors: list[ArmMotor]       # always 6 elements
     science: Science
-
+    # Additional telemetry from external systems
+    custom: dict[str, Any] = Field(default_factory=dict)
 
 # ---------------------------------------------------------------------------
 # Health response model
